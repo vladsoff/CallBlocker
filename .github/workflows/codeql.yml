@@ -25,6 +25,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -38,4 +43,11 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:java-kotlin"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CallBlocker-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
 
