@@ -119,7 +119,6 @@ class CallUiAccessibilityService : AccessibilityService() {
             DiagnosticsStore.saveDecision(this, "Заблокирован по тексту: $blockedText")
             CallVibrationController.blockCurrentCall(this)
             DndSilencer.restore(600L)
-            ScreeningCoordinator.rejectPendingCallIfActive()
             endCall()
             return
         }
