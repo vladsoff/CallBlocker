@@ -78,6 +78,7 @@ class CallUiAccessibilityService : AccessibilityService() {
             return
         }
         if (lastPhoneState != TelephonyManager.CALL_STATE_RINGING) {
+            DndSilencer.silenceTemporarily(this, 2500L)
             beginIncomingCallWindowSelection()
             lastPhoneState = TelephonyManager.CALL_STATE_RINGING
         }
