@@ -139,8 +139,7 @@ class CallUiAccessibilityService : AccessibilityService() {
 
         DiagnosticsStore.saveDecision(this, "Разрешён")
         CallVibrationController.allowCurrentCall(this)
-        DndSilencer.restore()
-    }
+        }
 
     @Suppress("DEPRECATION")
     override fun onDestroy() {
