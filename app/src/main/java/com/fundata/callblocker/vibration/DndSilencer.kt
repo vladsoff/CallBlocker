@@ -5,30 +5,32 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 
-class DndSilencer private constructor(context: Context) {
-
-    private val notificationManager =
-        context.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+object DndSilencer {
 
     private val handler = Handler(Looper.getMainLooper())
     private var previousInterruptionFilter: Int? = null
     private var isSilencedByUs = false
+    private var appContext: Context? = null
 
     private val restoreRunnable = Runnable {
         restore()
     }
 
-    fun silenceTemporarily(timeoutMs: Long = 2000L) {
-        if (!notificationManager.isNotificationPolicyAccessGranted) return
+    fun silenceTemporarily(context: Context, timeoutMs: Long = 2500L) {
+        val ctx = context.applicationContext
+        appContext = ctx
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (!nm.isNotificationPolicyAccessGranted) return
         if (isSilencedByUs) return
 
-        val currentFilter = notificationManager.currentInterruptionFilter
+        val currentFilter = nm.currentInterruptionFilter
         if (currentFilter == NotificationManager.INTERRUPTION_FILTER_NONE) return
 
         previousInterruptionFilter = currentFilter
         isSilencedByUs = true
 
-        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
 
         handler.removeCallbacks(restoreRunnable)
         handler.postDelayed(restoreRunnable, timeoutMs)
@@ -47,23 +49,16 @@ class DndSilencer private constructor(context: Context) {
 
     private fun executeRestore() {
         if (!isSilencedByUs) return
-        previousInterruptionFilter?.let { prev ->
-            if (notificationManager.isNotificationPolicyAccessGranted) {
-                notificationManager.setInterruptionFilter(prev)
+        val ctx = appContext
+        if (ctx != null) {
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            previousInterruptionFilter?.let { prev ->
+                if (nm.isNotificationPolicyAccessGranted) {
+                    nm.setInterruptionFilter(prev)
+                }
             }
         }
         previousInterruptionFilter = null
         isSilencedByUs = false
-    }
-
-    companion object {
-        @Volatile
-        private var instance: DndSilencer? = null
-
-        fun getInstance(context: Context): DndSilencer {
-            return instance ?: synchronized(this) {
-                instance ?: DndSilencer(context).also { instance = it }
-            }
-        }
     }
 }
