@@ -1,0 +1,16 @@
+name: Generate Keystore
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate keystore.jks
+        run: |
+          keytool -genkey -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key0 -storepass 123456 -keypass 123456 -dname "CN=CallBlocker, OU=Dev, O=CallBlocker, L=SPb, S=SPb, C=RU"
+      - name: Upload keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-keystore
+          path: keystore.jks
