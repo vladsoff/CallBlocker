@@ -49,5 +49,14 @@ jobs:
         with:
           name: CallBlocker-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-
+          
+      - name: Send APK to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ Новая сборка CallBlocker готова!
+            Коммит: ${{ github.event.head_commit.message }}
+          document: app/build/outputs/apk/debug/*.apk
 
