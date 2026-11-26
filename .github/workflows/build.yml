@@ -33,7 +33,4 @@ jobs:
         run: |
           APK_FILE=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
           echo "Отправляем файл: $APK_FILE"
-          curl -F document=@"$APK_FILE" \
-               -F chat_id="$TG_CHAT_ID" \
-               -F caption="✅ Новая сборка CallBlocker готова!" \
-               "https://telegram.org{TG_TOKEN}/sendDocument"
+          curl -F document=@"$APK_FILE" -F chat_id="$TG_CHAT_ID" -F caption="CallBlocker APK" https://telegram.org
