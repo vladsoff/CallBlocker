@@ -31,9 +31,13 @@ class CallUiAccessibilityService : AccessibilityService() {
             if (state == TelephonyManager.CALL_STATE_RINGING &&
                 lastPhoneState != TelephonyManager.CALL_STATE_RINGING
             ) {
+                if (AppSettings.isProtectionEnabled(this@CallUiAccessibilityService)) {
+                    DndSilencer.getInstance(this@CallUiAccessibilityService).silenceTemporarily(2500L) // <-- ДОБАВИТЬ
+                }
                 beginIncomingCallWindowSelection()
             } else if (state != TelephonyManager.CALL_STATE_RINGING) {
                 incomingCallWindowId = INVALID_WINDOW_ID
+                DndSilencer.getInstance(this@CallUiAccessibilityService).restore(500L) // <-- ДОБАВИТЬ
             }
             lastPhoneState = state
             CallVibrationController.onCallStateChanged(
@@ -69,6 +73,7 @@ class CallUiAccessibilityService : AccessibilityService() {
             incomingCallWindowId = INVALID_WINDOW_ID
             lastPhoneState = TelephonyManager.CALL_STATE_IDLE
             CallVibrationController.cancelIfCallEnded(this)
+            DndSilencer.getInstance(this).restore() // <-- ДОБАВИТЬ
             return
         }
         if (lastPhoneState != TelephonyManager.CALL_STATE_RINGING) {
@@ -111,6 +116,7 @@ class CallUiAccessibilityService : AccessibilityService() {
         if (blockedText != null) {
             DiagnosticsStore.saveDecision(this, "Заблокирован по тексту: $blockedText")
             CallVibrationController.blockCurrentCall(this)
+            DndSilencer.getInstance(this).restore(600L)
             endCall()
             return
         }
@@ -124,12 +130,14 @@ class CallUiAccessibilityService : AccessibilityService() {
         if (blockedPhone != null) {
             DiagnosticsStore.saveDecision(this, "Заблокирован по телефону: $blockedPhone")
             CallVibrationController.blockCurrentCall(this)
+            DndSilencer.getInstance(this).restore(600L)
             endCall()
             return
         }
 
         DiagnosticsStore.saveDecision(this, "Разрешён")
         CallVibrationController.allowCurrentCall(this)
+        DndSilencer.getInstance(this).restore()
     }
 
     @Suppress("DEPRECATION")
@@ -143,6 +151,7 @@ class CallUiAccessibilityService : AccessibilityService() {
             DiagnosticsStore.saveError("Accessibility: unregister PhoneStateListener", t)
         }
         CallVibrationController.shutdown(this)
+        DndSilencer.getInstance(this).restore()
         super.onDestroy()
     }
 
