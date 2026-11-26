@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.fundata.callblocker.data.DiagnosticsStore
 
 object DndSilencer {
 
@@ -21,16 +22,29 @@ object DndSilencer {
         appContext = ctx
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if (!nm.isNotificationPolicyAccessGranted) return
+        if (!nm.isNotificationPolicyAccessGranted) {
+            DiagnosticsStore.saveDecision(ctx, "DND: нет разрешения (isNotificationPolicyAccessGranted = false)")
+            return
+        }
         if (isSilencedByUs) return
 
         val currentFilter = nm.currentInterruptionFilter
-        if (currentFilter == NotificationManager.INTERRUPTION_FILTER_NONE) return
+        if (currentFilter == NotificationManager.INTERRUPTION_FILTER_NONE) {
+            DiagnosticsStore.saveDecision(ctx, "DND: уже включен пользователем")
+            return
+        }
 
         previousInterruptionFilter = currentFilter
         isSilencedByUs = true
 
-        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+        try {
+            nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+            DiagnosticsStore.saveDecision(ctx, "DND: включена тишина (было: $currentFilter, таймер: ${timeoutMs}мс)")
+        } catch (t: Throwable) {
+            DiagnosticsStore.saveError("DND: ошибка включения", t)
+            isSilencedByUs = false
+            return
+        }
 
         handler.removeCallbacks(restoreRunnable)
         handler.postDelayed(restoreRunnable, timeoutMs)
@@ -54,7 +68,12 @@ object DndSilencer {
             val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             previousInterruptionFilter?.let { prev ->
                 if (nm.isNotificationPolicyAccessGranted) {
-                    nm.setInterruptionFilter(prev)
+                    try {
+                        nm.setInterruptionFilter(prev)
+                        DiagnosticsStore.saveDecision(ctx, "DND: звук возвращён (режим: $prev)")
+                    } catch (t: Throwable) {
+                        DiagnosticsStore.saveError("DND: ошибка возврата", t)
+                    }
                 }
             }
         }
