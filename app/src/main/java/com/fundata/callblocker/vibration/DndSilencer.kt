@@ -28,7 +28,6 @@ class DndSilencer private constructor(context: Context) {
         previousInterruptionFilter = currentFilter
         isSilencedByUs = true
 
-        // Включаем полную тишину — часы мгновенно перестают получать вызовы
         notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
 
         handler.removeCallbacks(restoreRunnable)
