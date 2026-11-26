@@ -18,13 +18,16 @@ android {
     signingConfigs {
         create("release") {
             storeFile = rootProject.file("sign/keystore.jks")
-            storePassword = ""
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "123456"
             keyAlias = "key0"
-            keyPassword = ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "123456"
         }
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("release")
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
         }
