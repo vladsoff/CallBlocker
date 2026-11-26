@@ -23,14 +23,14 @@ object DndSilencer {
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (!nm.isNotificationPolicyAccessGranted) {
-            DiagnosticsStore.saveDecision(ctx, "DND: нет разрешения (isNotificationPolicyAccessGranted = false)")
+            DiagnosticsStore.saveError("DND: нет разрешения", Throwable("isNotificationPolicyAccessGranted = false"))
             return
         }
         if (isSilencedByUs) return
 
         val currentFilter = nm.currentInterruptionFilter
         if (currentFilter == NotificationManager.INTERRUPTION_FILTER_NONE) {
-            DiagnosticsStore.saveDecision(ctx, "DND: уже включен пользователем")
+            DiagnosticsStore.saveError("DND: уже включен пользователем", Throwable("filter = NONE"))
             return
         }
 
@@ -39,7 +39,7 @@ object DndSilencer {
 
         try {
             nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
-            DiagnosticsStore.saveDecision(ctx, "DND: включена тишина (было: $currentFilter, таймер: ${timeoutMs}мс)")
+            DiagnosticsStore.saveError("DND: ВКЛЮЧЕНА ТИШИНА", Throwable("было: $currentFilter, таймер: ${timeoutMs}мс"))
         } catch (t: Throwable) {
             DiagnosticsStore.saveError("DND: ошибка включения", t)
             isSilencedByUs = false
@@ -70,7 +70,7 @@ object DndSilencer {
                 if (nm.isNotificationPolicyAccessGranted) {
                     try {
                         nm.setInterruptionFilter(prev)
-                        DiagnosticsStore.saveDecision(ctx, "DND: звук возвращён (режим: $prev)")
+                        DiagnosticsStore.saveError("DND: звук возвращён", Throwable("режим: $prev"))
                     } catch (t: Throwable) {
                         DiagnosticsStore.saveError("DND: ошибка возврата", t)
                     }
