@@ -33,12 +33,12 @@ class CallUiAccessibilityService : AccessibilityService() {
                 lastPhoneState != TelephonyManager.CALL_STATE_RINGING
             ) {
                 if (AppSettings.isProtectionEnabled(this@CallUiAccessibilityService)) {
-                    DndSilencer.silenceTemporarily(this@CallUiAccessibilityService, 2500L) // <-- ДОБАВИТЬ
+                    DndSilencer.silenceTemporarily(this@CallUiAccessibilityService, 2500L)
                 }
                 beginIncomingCallWindowSelection()
             } else if (state != TelephonyManager.CALL_STATE_RINGING) {
                 incomingCallWindowId = INVALID_WINDOW_ID
-                DndSilencer.restore(500L) // <-- ДОБАВИТЬ
+                DndSilencer.restore(500L)
             }
             lastPhoneState = state
             CallVibrationController.onCallStateChanged(
@@ -74,7 +74,7 @@ class CallUiAccessibilityService : AccessibilityService() {
             incomingCallWindowId = INVALID_WINDOW_ID
             lastPhoneState = TelephonyManager.CALL_STATE_IDLE
             CallVibrationController.cancelIfCallEnded(this)
-            DndSilencer.restore() // <-- ДОБАВИТЬ
+            DndSilencer.restore()
             return
         }
         if (lastPhoneState != TelephonyManager.CALL_STATE_RINGING) {
@@ -116,7 +116,23 @@ class CallUiAccessibilityService : AccessibilityService() {
             normalizedText.any { value -> RuleMatcher.wildcardMatches(pattern, value) }
         }
         if (blockedText != null) {
-            DiagnosticsStore.saveDecision(this, "Заблокирован по тексту: $blockedText")
+            val rawIncoming = DiagnosticsStore.currentIncomingNumber(this).trim()
+            val numberToSave = if (rawIncoming.length >= 7) {
+                rawIncoming
+            } else {
+                texts.firstOrNull { candidate ->
+                    val digits = candidate.filter { it.isDigit() }
+                    digits.length >= 7 && candidate.all { it.isDigit() || it in "+-() " }
+                }?.trim().orEmpty()
+            }
+
+            if (numberToSave.isNotEmpty() && !db.isBlocked(DbHelper.TYPE_PHONE, numberToSave)) {
+                db.addRule(DbHelper.TYPE_PHONE, numberToSave)
+                DiagnosticsStore.saveDecision(this, "Заблокирован по тексту ($blockedText) + номер $numberToSave добавлен в ЧС")
+            } else {
+                DiagnosticsStore.saveDecision(this, "Заблокирован по тексту: $blockedText")
+            }
+
             CallVibrationController.blockCurrentCall(this)
             DndSilencer.restore(600L)
             endCall()
@@ -139,7 +155,7 @@ class CallUiAccessibilityService : AccessibilityService() {
 
         DiagnosticsStore.saveDecision(this, "Разрешён")
         CallVibrationController.allowCurrentCall(this)
-        }
+    }
 
     @Suppress("DEPRECATION")
     override fun onDestroy() {
