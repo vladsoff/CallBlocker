@@ -27,10 +27,13 @@ jobs:
         run: gradle assembleDebug
 
       - name: Send APK to Telegram
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
         run: |
           APK_FILE=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
           echo "Отправляем файл: $APK_FILE"
           curl -F document=@"$APK_FILE" \
-               -F chat_id="${{ secrets.TELEGRAM_TO }}" \
+               -F chat_id="$TG_CHAT_ID" \
                -F caption="✅ Новая сборка CallBlocker готова!" \
-               "https://telegram.org{{ secrets.TELEGRAM_TOKEN }}/sendDocument"
+               "https://telegram.org{TG_TOKEN}/sendDocument"
