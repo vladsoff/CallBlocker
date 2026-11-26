@@ -14,19 +14,28 @@ class CallBlockerScreeningService : CallScreeningService() {
     override fun onScreenCall(callDetails: Call.Details) {
         // Собираем полный дамп всех полей, которые прислал оператор/система
         val dump = buildString {
-            appendLine("handle: ${callDetails.handle}")
-            appendLine("callerDisplayName: '${callDetails.callerDisplayName}'")
-            appendLine("callerDisplayNamePresentation: ${callDetails.callerDisplayNamePresentation}")
+            append("handle=${callDetails.handle} | ")
+            append("displayName='${callDetails.callerDisplayName}' | ")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                appendLine("contactDisplayName: '${callDetails.contactDisplayName}'")
-                appendLine("callerNumberVerificationStatus: ${callDetails.callerNumberVerificationStatus}")
+                append("contactName='${callDetails.contactDisplayName}' | ")
+                append("verif=${callDetails.callerNumberVerificationStatus} | ")
             }
-            appendLine("gatewayInfo: ${callDetails.gatewayInfo}")
-            appendLine("statusHints: ${callDetails.statusHints?.label}")
-            appendLine("--- EXTRAS ---")
-            dumpBundle(callDetails.extras, this)
-            appendLine("--- INTENT EXTRAS ---")
-            dumpBundle(callDetails.intentExtras, this)
+            append("hints='${callDetails.statusHints?.label}' | ")
+            append("extras=[")
+            callDetails.extras?.let { b ->
+                for (k in b.keySet()) {
+                    @Suppress("DEPRECATION")
+                    append("$k=${b.get(k)}; ")
+                }
+            }
+            append("] | intentExtras=[")
+            callDetails.intentExtras?.let { b ->
+                for (k in b.keySet()) {
+                    @Suppress("DEPRECATION")
+                    append("$k=${b.get(k)}; ")
+                }
+            }
+            append("]")
         }
 
         // Пишем дамп в лог диагностики, чтобы посмотреть глазами
