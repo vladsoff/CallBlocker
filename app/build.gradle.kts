@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
-
+val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 6
 android {
     namespace = "com.fundata.callblocker"
     compileSdk = 33
@@ -11,8 +11,8 @@ android {
         applicationId = "com.fundata.callblocker"
         minSdk = 29
         targetSdk = 33
-        versionCode = 5
-        versionName = "1.0.0"
+        versionCode = runNumber
+        versionName = "1.0.$runNumber"
     }
 
     signingConfigs {
